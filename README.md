@@ -1,1 +1,2 @@
-mm-stuff-swinging
+# mm-stuff-swinging
+Program modelling the pendulum movement
