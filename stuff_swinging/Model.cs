@@ -20,7 +20,8 @@ namespace stuff_oscillating
 #pragma warning restore IDE1006 // Стили именования
             public double InitialVelocity = 0;
             public double InitialX  = 1;
-            public double Dt = 0.1;
+            public double Dt = 0.5;
+            public double Length = 10;
 
             private static ReaderWriterLockSlim fa_rwlock = new ReaderWriterLockSlim();
             private double forceAmplitude = 0;
@@ -115,7 +116,7 @@ namespace stuff_oscillating
 
         public class ModelStatus : EventArgs
         {
-            public double X;
+            public double Angle;
             public double Velocity;
             public double Energy;
             public double Time;
@@ -175,22 +176,32 @@ namespace stuff_oscillating
             }
         }
 
+        private static double F(double t, double y, double p)
+        {
+            return -9.81 / parameters.Length * Math.Sin(y);
+        }
 
         public static EventHandler<ModelStatus> ModelTick;
 
         private static void CalculateState(object state)
         {
-            double time = stopwatch.Elapsed.TotalMilliseconds / 1000;
-            double a = -parameters.ω * modelStatus.X - parameters.FrictionCoeffitient * modelStatus.Velocity;
-            a += Impulse / parameters.ObjectMass;
-            Impulse = 0;
-            if (parameters.UseForce)
-               a += parameters.ForceAmplitude * (1 - Math.Cos(2 * Math.PI * time / parameters.ForcePeriod)) / 2;
-            modelStatus.Time = time;
-            modelStatus.Velocity = modelStatus.Velocity + a * parameters.Dt;
-            modelStatus.X += modelStatus.Velocity * parameters.Dt;
-            modelStatus.Energy = 0.5 * (parameters.ObjectMass * modelStatus.Velocity * modelStatus.Velocity +
-                 modelStatus.X * modelStatus.X * parameters.RestrictionCoeffitient);
+            double dt = stopwatch.Elapsed.TotalMilliseconds / 1000 - modelStatus.Time;
+            double t = modelStatus.Time;
+            double a = modelStatus.Angle;
+            double v = modelStatus.Velocity;
+            double k11 = F(t, a, v);
+            double k21 = v;
+            double k12 = F(t + dt / 2, a + dt * k21 / 2, v + dt * k11 / 2);
+            double k22 = v + dt * k11 / 2;
+            double k13 = F(t + dt / 2, a + dt * k22 / 2, v + dt * k12 / 2);
+            double k23 = v + dt * k12 / 2;
+            double k14 = F(t + dt, a + dt * k23, v + dt * k13);
+            double k24 = v + dt * k13;
+            modelStatus.Velocity += dt * (k11 + 2 * k12 + 2 * k13 + k14) / 6;
+            modelStatus.Angle += dt * (k21 + 2 * k22 + 2 * k23 + k24) / 6;
+            modelStatus.Time += dt;
+            modelStatus.Energy = parameters.ObjectMass * 9.81 * parameters.Length * (1 - Math.Cos(modelStatus.Angle)) +
+                0.5 * parameters.ObjectMass * parameters.Length * parameters.Length * modelStatus.Velocity * modelStatus.Velocity;
             ModelTick(null, modelStatus);
         }
 
@@ -214,7 +225,7 @@ namespace stuff_oscillating
             modelStatus = new ModelStatus()
             {
                 Time = 0,
-                X = parameters.InitialX,
+                Angle = parameters.InitialX,
                 Velocity = parameters.InitialVelocity,
                 Energy = 0.5 * (parameters.ObjectMass * parameters.InitialVelocity * parameters.InitialVelocity +
                     parameters.InitialX * parameters.InitialX * parameters.RestrictionCoeffitient)

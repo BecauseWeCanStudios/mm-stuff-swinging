@@ -124,22 +124,22 @@ namespace stuff_oscillating
             {
                 PointNumber = Data.IsEmpty() ? 1 : Data.Last().PointNumber + 1,
                 TimePoint = result.Time,
-                X = result.X,
+                X = result.Angle,
                 V = result.Velocity,
                 E = result.Energy,
             });
             using (sciChartSurface.SuspendUpdates())
             {
-                XDataSeries.Append(result.Time, result.X);
+                XDataSeries.Append(result.Time, result.Angle);
                 SpeedDataSeries.Append(result.Time, result.Velocity);
                 EnergyDataSeries.Append(result.Time, result.Energy);
             }
             using (sciPhaseChartSurface.SuspendUpdates())
             {
-                PhaseDataSeries.Append(result.X, result.Velocity);
+                PhaseDataSeries.Append(result.Angle, result.Velocity);
             }
-            min = Math.Min(min, result.X);
-            max = Math.Max(max, result.X);
+            min = Math.Min(min, result.Angle);
+            max = Math.Max(max, result.Angle);
             if (animTab.IsSelected)
             {
                 double k = min != 0 && max != 0
@@ -149,13 +149,13 @@ namespace stuff_oscillating
                 k = Math.Max(k, 20);
                 rectangle.Width = k / 4;
                 rectangle.Height = k / 4;
-                spring.X2 = 200 + (result.X - min) * k;
+                spring.X2 = 200 + (result.Angle - min) * k;
                 spring.StrokeThickness = 1 + (80 * Math.Cos((spring.X2 - 200) * Math.PI / 1600)) * k / 800;
                 spring.Stroke = new SolidColorBrush(new Color()
                 {
-                    R = result.X < 0 ? (byte)(Math.Cos((result.X - min) * Math.PI / 2 / Math.Abs(min)) * 255) : (byte)0,
-                    G = (byte)(Math.Abs(Math.Sin((result.X - min) * Math.PI / (Math.Abs(min) + Math.Abs(max)))) * 255),
-                    B = result.X > 0 ? (byte)(Math.Cos((max - result.X) * Math.PI / 2 / Math.Abs(max)) * 255) : (byte)0,
+                    R = result.Angle < 0 ? (byte)(Math.Cos((result.Angle - min) * Math.PI / 2 / Math.Abs(min)) * 255) : (byte)0,
+                    G = (byte)(Math.Abs(Math.Sin((result.Angle - min) * Math.PI / (Math.Abs(min) + Math.Abs(max)))) * 255),
+                    B = result.Angle > 0 ? (byte)(Math.Cos((max - result.Angle) * Math.PI / 2 / Math.Abs(max)) * 255) : (byte)0,
                     A = 255
                 });
                 Canvas.SetTop(rectangle, 360 - rectangle.Height / 2);
