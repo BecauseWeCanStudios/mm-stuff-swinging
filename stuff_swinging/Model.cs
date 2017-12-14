@@ -162,16 +162,16 @@ namespace stuff_oscillating
             double t = modelStatus.Time;
             double a = modelStatus.Angle;
             double v = modelStatus.Velocity;
-            double k11 = f(t, a, v);
+            double impulse = Impulse / parameters.ObjectMass / parameters.Length;
+            Impulse = 0;
+            double k11 = f(t, a, v) + impulse;
             double k21 = v;
-            double k12 = f(t + dt / 2, a + dt * k21 / 2, v + dt * k11 / 2);
+            double k12 = f(t + dt / 2, a + dt * k21 / 2, v + dt * k11 / 2) + impulse;
             double k22 = v + dt * k11 / 2;
-            double k13 = f(t + dt / 2, a + dt * k22 / 2, v + dt * k12 / 2);
+            double k13 = f(t + dt / 2, a + dt * k22 / 2, v + dt * k12 / 2) + impulse;
             double k23 = v + dt * k12 / 2;
-            double k14 = f(t + dt, a + dt * k23, v + dt * k13);
+            double k14 = f(t + dt, a + dt * k23, v + dt * k13) + impulse;
             double k24 = v + dt * k13;
-            double xc = Math.Sin(a) * parameters.Length;
-            double yc = Math.Cos(a) * parameters.Length;
             modelStatus.Velocity += dt * (k11 + 2 * k12 + 2 * k13 + k14) / 6;
             modelStatus.Angle += dt * (k21 + 2 * k22 + 2 * k23 + k24) / 6;
             //modelStatus.Angle %= 2 * Math.PI;
@@ -222,7 +222,7 @@ namespace stuff_oscillating
                 };
             f = (t, a, v) => (nf(a) + archimedes(a) + drag(t, a, v)) / parameters.Length;
             stopwatch.Restart();
-            timer = new Timer(CalculateState, null, 0, 10);
+            timer = new Timer(CalculateState, null, 0, 50);
         }
 
         public static void Stop()
