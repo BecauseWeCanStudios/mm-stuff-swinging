@@ -11,6 +11,8 @@
                    xmlns:wpf="http://materialdesigninxaml.net/winfx/xaml/themes"
                    xmlns:system="clr-namespace:System;assembly=mscorlib"
                    xmlns:s="http://schemas.abtsoftware.co.uk/scichart"
+                   xmlns:qc="clr-namespace:QuickConverter;assembly=QuickConverter"
+                   xmlns:c="clr-namespace:CalcBinding;assembly=CalcBinding"
                    mc:Ignorable="d"
                    Title="Модель пружинного маятника" Height="900" Width="1400"
                    GlowBrush="{DynamicResource AccentColorBrush}"
@@ -22,6 +24,8 @@
                    FontFamily="pack://application:,,,/MaterialDesignThemes.Wpf;component/Resources/Roboto/#Roboto">
     <metro:MetroWindow.Resources>
         <system:String x:Key="Partition">QuickStart</system:String>
+        <local:RadiusMassToDensityConverter x:Key="RadiusMassToDensityConverter"></local:RadiusMassToDensityConverter>
+        <local:LengthToPeriodConverter x:Key="LengthToPeriodConverter"></local:LengthToPeriodConverter>
     </metro:MetroWindow.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -41,7 +45,7 @@
                     <dragablz:InterTabController Partition="{StaticResource Partition}" />
                 </dragablz:TabablzControl.InterTabController>
                 <TabItem Header="ПАРАМЕТРЫ МОДЕЛИ">
-                    <Grid ShowGridLines="False">
+                    <Grid ShowGridLines="True">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="30" />
                             <RowDefinition Height="50" />
@@ -54,15 +58,21 @@
                             <RowDefinition Height="30" />
                             <RowDefinition Height="30" />
                             <RowDefinition Height="30" />
+                            <RowDefinition Height="30" />
+                            <RowDefinition Height="30" />
+                            <RowDefinition Height="30" />
+                            <RowDefinition Height="30" />
+                            <RowDefinition Height="30" />
                         </Grid.RowDefinitions>
 
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="200" />
+                            <ColumnDefinition Width="220" />
                             <ColumnDefinition Width="150" />
+                            <ColumnDefinition Width="220" />
                         </Grid.ColumnDefinitions>
                         <Label Content="Уравнение модели:" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
                                VerticalAlignment="Center" />
-                        <Image Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3" Margin="5">
+                        <Image Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3" Margin="5" HorizontalAlignment="Left">
                             <Image.Source>
                                 <DrawingImage>
                                     <DrawingImage.Drawing>
@@ -190,29 +200,46 @@
                             </Image.Source>
                         </Image>
 
-                        <Label Content="Масса" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Row="2"
+                        <Label Content="Масса тела" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Row="2"
                                Grid.Column="0" />
                         <TextBox x:Name="MassTB" Grid.Column="1" HorizontalAlignment="Center" Height="23"
-                                 Grid.Row="2" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="50"
+                                 Grid.Row="2" TextWrapping="Wrap" Text="10" VerticalAlignment="Top" Width="50"
                                  PreviewTextInput="DoubleTBPreviewTextInput"
                                  PreviewKeyDown="TB_PreviewKeyDown" Foreground="{StaticResource IdealForegroundColorBrush}"/>
 
-                        <Label Content="Коэффициент упругости" HorizontalAlignment="Left" VerticalAlignment="Top"
+                        <Label Grid.Row="2" Grid.Column="2">
+                          <Label.Content>
+                            <MultiBinding Converter="{StaticResource RadiusMassToDensityConverter}" ConverterParameter="Плотность шара: {0:N2}">
+                              <Binding ElementName="RadiusTB" Path="Text"></Binding>
+                              <Binding ElementName="MassTB" Path="Text"></Binding>
+                            </MultiBinding>
+                          </Label.Content>
+                        </Label>
+
+                        <Label Content="Радиус тела" HorizontalAlignment="Left" VerticalAlignment="Top"
                                Grid.Row="3"
                                Grid.Column="0" />
-                        <TextBox x:Name="RestrictionCoefficientTB" Grid.Column="1" HorizontalAlignment="Center"
+                        <TextBox x:Name="RadiusTB" Grid.Column="1" HorizontalAlignment="Center"
                                  Height="23"
-                                 Grid.Row="3" TextWrapping="Wrap" Text="25" VerticalAlignment="Top" Width="50"
+                                 Grid.Row="3" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="50"
                                  PreviewTextInput="DoubleTBPreviewTextInput"
                                  PreviewKeyDown="TB_PreviewKeyDown" Foreground="{StaticResource IdealForegroundColorBrush}"/>
 
-                        <Label Content="Коэффициент трения" HorizontalAlignment="Left" VerticalAlignment="Top"
+                        <Label Content="Длина стержня" HorizontalAlignment="Left" VerticalAlignment="Top"
                                Grid.Row="4"
                                Grid.Column="0" />
 
-                        <TextBox x:Name="FrictionCoefficientTB" Grid.Column="1" HorizontalAlignment="Center"
+                        <Label Grid.Row="4" Grid.Column="2">
+                          <Label.Content>
+                                <MultiBinding Converter="{StaticResource LengthToPeriodConverter}" ConverterParameter="Частота колебаний: {0:N2}">
+                                    <Binding ElementName="LengthTB" Path="Text"></Binding>
+                                </MultiBinding>
+                          </Label.Content>
+                        </Label>
+
+                        <TextBox x:Name="LengthTB" Grid.Column="1" HorizontalAlignment="Center"
                                  Height="23"
-                                 Grid.Row="4" TextWrapping="Wrap" Text="0.1" VerticalAlignment="Top" Width="50"
+                                 Grid.Row="4" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="50"
                                  PreviewTextInput="DoubleTBPreviewTextInput"
                                  PreviewKeyDown="TB_PreviewKeyDown" Foreground="{StaticResource IdealForegroundColorBrush}"/>
 
@@ -225,48 +252,90 @@
                                  PreviewTextInput="DoubleTBPreviewTextInput"
                                  PreviewKeyDown="TB_PreviewKeyDown" Foreground="{StaticResource IdealForegroundColorBrush}"/>
 
-                        <Label Content="Начальное положение" HorizontalAlignment="Left" VerticalAlignment="Top"
+                        <Label Content="Начальный угол" HorizontalAlignment="Left" VerticalAlignment="Top"
                                Grid.Row="6"
                                Grid.Column="0" />
 
-                        <TextBox x:Name="InitialPositionTB" Grid.Column="1" HorizontalAlignment="Center" Height="23"
+                        <TextBox x:Name="InitialAngleTB" Grid.Column="1" HorizontalAlignment="Center" Height="23"
                                  Grid.Row="6" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="50"
                                  PreviewTextInput="DoubleTBPreviewTextInput"
                                  PreviewKeyDown="TB_PreviewKeyDown" Foreground="{StaticResource IdealForegroundColorBrush}"/>
 
-                        <Label Content="Амплитуда внешней силы" HorizontalAlignment="Left" VerticalAlignment="Top"
+                        <Label Content="Амплитуда ветра силы" HorizontalAlignment="Left" VerticalAlignment="Top"
                                Grid.Row="7"
                                Grid.Column="0" />
 
-                        <TextBox x:Name="ExternalForceAmplitudeTB" Grid.Column="1" HorizontalAlignment="Center"
+                        <TextBox x:Name="WindAmplitudeTB" Grid.Column="1" HorizontalAlignment="Center"
                                  Height="23"
                                  Grid.Row="7" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="50"
                                  PreviewTextInput="DoubleTBPreviewTextInput" TextChanged="ExternalForceAmplitudeTB_TextChanged"
                                  PreviewKeyDown="TB_PreviewKeyDown" Foreground="{StaticResource IdealForegroundColorBrush}" />
 
-                        <Label Content="Период действия внешней силы" HorizontalAlignment="Left"
+                        <Label Content="Частота действия ветра" HorizontalAlignment="Left"
                                VerticalAlignment="Top" Grid.Row="8"
                                Grid.Column="0" />
-                        <TextBox x:Name="ExternalForcePeriodTB" Grid.Column="1" HorizontalAlignment="Center"
+                        
+                        <TextBox x:Name="WindPeriodTB" Grid.Column="1" HorizontalAlignment="Center"
                                  Height="23"
-                                 Grid.Row="8" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="50"
+                                 Grid.Row="8" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="50"
                                  PreviewTextInput="DoubleTBPreviewTextInput" TextChanged="ExternalForcePeriodTB_TextChanged"
                                  PreviewKeyDown="TB_PreviewKeyDown" Foreground="{StaticResource IdealForegroundColorBrush}"/>
 
-                        <Label Content="Внешняя сила" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Row="9"
+                        <Label Content="Постоянный ветер" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Row="9"
                                Grid.Column="0" />
-                        <CheckBox x:Name="ExternalForceCB" Grid.Column="1" Grid.Row="9" Margin="5"
-                                  HorizontalAlignment="Center" Height="23" VerticalAlignment="Top"
-                                  IsChecked="False" Checked="ExternalForceCB_Checked" Unchecked="ExternalForceCB_Checked" Foreground="{StaticResource IdealForegroundColorBrush}"/>
-
+                        
+                        <TextBox x:Name="ConstantWindTB" Grid.Column="1" HorizontalAlignment="Center"
+                               Height="23"
+                               Grid.Row="9" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="50"
+                               PreviewTextInput="DoubleTBPreviewTextInput" TextChanged="ExternalForcePeriodTB_TextChanged"
+                               PreviewKeyDown="TB_PreviewKeyDown" Foreground="{StaticResource IdealForegroundColorBrush}"/>
+                    
                         <Label Content="Импульс" HorizontalAlignment="Left"
                                VerticalAlignment="Top" Grid.Row="10"
                                Grid.Column="0" />
                         <TextBox x:Name="ImpulseTB" Grid.Column="1" HorizontalAlignment="Center"
                                  Height="23"
-                                 Grid.Row="10" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="50"
+                                 Grid.Row="10" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="50"
                                  PreviewTextInput="DoubleTBPreviewTextInput"
                                  PreviewKeyDown="TB_PreviewKeyDown" Foreground="{StaticResource IdealForegroundColorBrush}"/>
+
+                         <Label Content="Плотность среды" HorizontalAlignment="Left"
+                                 VerticalAlignment="Top" Grid.Row="11"
+                                 Grid.Column="0" />
+                         <TextBox x:Name="EnviromentDensityTB" Grid.Column="1" HorizontalAlignment="Center"
+                                   Height="23"
+                                   Grid.Row="11" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="50"
+                                   PreviewTextInput="DoubleTBPreviewTextInput"
+                                   PreviewKeyDown="TB_PreviewKeyDown" Foreground="{StaticResource IdealForegroundColorBrush}"/>
+
+                         <Label Content="Вязкость среды" HorizontalAlignment="Left"
+                                 VerticalAlignment="Top" Grid.Row="12"
+                                 Grid.Column="0" />
+                         <TextBox x:Name="EnviromentViscosityTB" Grid.Column="1" HorizontalAlignment="Center"
+                                   Height="23"
+                                   Grid.Row="12" TextWrapping="Wrap" Text="1" VerticalAlignment="Top" Width="50"
+                                   PreviewTextInput="DoubleTBPreviewTextInput"
+                                   PreviewKeyDown="TB_PreviewKeyDown" Foreground="{StaticResource IdealForegroundColorBrush}"/>
+
+                          <Label Content="Сила Архимеда" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Row="13"
+                                 Grid.Column="0" />
+                          <CheckBox x:Name="ArchimedesForceCB" Grid.Column="1" Grid.Row="13" Margin="5"
+                                    HorizontalAlignment="Center" Height="23" VerticalAlignment="Top"
+                                    IsChecked="False" Foreground="{StaticResource IdealForegroundColorBrush}"/>
+
+                        <Label Content="Сила сопротивления газа" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Row="14"
+                               Grid.Column="0" />
+                        <CheckBox x:Name="GasDragForceCB" Grid.Column="1" Grid.Row="14" Margin="5"
+                                HorizontalAlignment="Center" Height="23" VerticalAlignment="Top"
+                                IsChecked="False" Foreground="{StaticResource IdealForegroundColorBrush}"
+                                IsEnabled="{qc:Binding '!$P', P={Binding ElementName=LiquidDragForceCB, Path=IsChecked}}"/>
+
+                      <Label Content="Сила сопротивления жидкости" HorizontalAlignment="Left" VerticalAlignment="Top" Grid.Row="15"
+                             Grid.Column="0" />
+                      <CheckBox x:Name="LiquidDragForceCB" Grid.Column="1" Grid.Row="15" Margin="5"
+                                HorizontalAlignment="Center" Height="23" VerticalAlignment="Top"
+                                IsChecked="False" Foreground="{StaticResource IdealForegroundColorBrush}"
+                                IsEnabled="{qc:Binding '!$P', P={Binding ElementName=GasDragForceCB, Path=IsChecked}}"/>
 
                     </Grid>
                 </TabItem>
@@ -285,7 +354,7 @@
                                 <Ellipse Grid.Column="0" Width="10" Height="10" Margin="5,0,20,0"
                                          HorizontalAlignment="Left" VerticalAlignment="Center"
                                          Fill="{Binding Stroke, Converter={StaticResource ColorToBrushConverter}}" />
-                                <TextBlock Grid.Column="1" Width="90" HorizontalAlignment="Center"
+                                <TextBlock Grid.Column="1" Width="150" HorizontalAlignment="Center"
                                            Text="{Binding SeriesName}" />
                                 <Grid Grid.Column="2"
                                       Visibility="{Binding DataContext.ShowVisibilityCheckboxes, ElementName=PART_LegendItems, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -436,11 +505,11 @@
               </TabItem>
             </dragablz:TabablzControl>
         </dockablz:Layout>
-        <Button x:Name="StartBtn" Content="Старт" Grid.Column="0" Grid.Row="0" Click="StartBtn_OnClick" />
-        <Button x:Name="StopBtn" Content="Стоп" Grid.Column="1" Grid.Row="0" Click="StopBtn_OnClick" IsEnabled="False" />
-        <Button x:Name="PauseButton" Content="Приостановить" Grid.Column="2" Grid.Row="0" Click="PauseButton_Click" IsEnabled="False"/>
-        <Button x:Name="ResumeButton" Content="Продолжить" Grid.Column="3" Grid.Row="0" Click="ResumeButton_Click"  IsEnabled="False"/>
-        <Button x:Name="ImpulseBtn" Content="Импульс" Grid.Column="4" Grid.Row="0" Click="ImpulseBtn_OnClick"
-                IsEnabled="False" />
+            <Button x:Name="StartBtn" Content="Старт" Grid.Column="0" Grid.Row="0" Click="StartBtn_OnClick" />
+            <Button x:Name="StopBtn" Content="Стоп" Grid.Column="1" Grid.Row="0" Click="StopBtn_OnClick" IsEnabled="False" />
+            <Button x:Name="PauseButton" Content="Приостановить" Grid.Column="2" Grid.Row="0" Click="PauseButton_Click" IsEnabled="False"/>
+            <Button x:Name="ResumeButton" Content="Продолжить" Grid.Column="3" Grid.Row="0" Click="ResumeButton_Click"  IsEnabled="False"/>
+            <Button x:Name="ImpulseBtn" Content="Импульс" Grid.Column="4" Grid.Row="0" Click="ImpulseBtn_OnClick"
+                IsEnabled="False"/>
     </Grid>
 </metro:MetroWindow>

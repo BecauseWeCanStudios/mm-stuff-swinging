@@ -17,12 +17,9 @@ namespace stuff_oscillating
             public double InitialAngle  = 1;
             public double Length = 10;
             public double Shift = 0;
-            public double ShiftPeriod = 0.5;
-            public double ShiftAmplitude = 1;
             public double EnviromentDensity = 1.1;
-            public double ObjectRadius = 1;
             public double ObjectDensity { get { return ObjectMass / ObjectVolume; } }
-            public double ObjectVolume { get { return 4.0 / 3.0 * Math.PI * Math.Pow(ObjectRadius, 3); } }
+            public double ObjectVolume { get { return 4.0 / 3.0 * Math.PI * Math.Pow(Radius, 3); } }
             public bool UseArchimedes = false;
             public bool UseDrag = true;
             public bool UseViscosity = false;
@@ -34,7 +31,7 @@ namespace stuff_oscillating
 
             private static ReaderWriterLockSlim fa_rwlock = new ReaderWriterLockSlim();
             private double forceAmplitude = 0;
-            public double ForceAmplitude {
+            public double ShiftAmplitude {
                 get
                 {
                     try
@@ -63,7 +60,7 @@ namespace stuff_oscillating
 
             private static ReaderWriterLockSlim fp_rwlock = new ReaderWriterLockSlim();
             private double forcePeriod = 1;
-            public double ForcePeriod
+            public double ShiftPeriod
             {
                 get
                 {
@@ -87,36 +84,6 @@ namespace stuff_oscillating
                     finally
                     {
                         fp_rwlock.ExitWriteLock();
-                    }
-                }
-            }
-
-            private static ReaderWriterLockSlim rwlock = new ReaderWriterLockSlim();
-            private bool useForce = false;
-            public bool UseForce
-            {
-                get
-                {
-                    try
-                    {
-                        rwlock.EnterReadLock();
-                        return useForce;
-                    }
-                    finally
-                    {
-                        rwlock.ExitReadLock();
-                    }
-                }
-                set
-                {
-                    try
-                    {
-                        rwlock.EnterWriteLock();
-                        useForce = value;
-                    }
-                    finally
-                    {
-                        rwlock.ExitWriteLock();
                     }
                 }
             }

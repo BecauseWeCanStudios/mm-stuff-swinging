@@ -34,10 +34,10 @@ namespace stuff_oscillating
     public partial class MainWindow : MetroWindow, INotifyPropertyChanged
     {
         static bool IsFirst = true;
-        XyDataSeries<double, double> XDataSeries = new XyDataSeries<double, double>() { FifoCapacity = 500, SeriesName = "X" };
-        XyDataSeries<double, double> SpeedDataSeries = new XyDataSeries<double, double>() { FifoCapacity = 500, SeriesName = "Speed" };
-        XyDataSeries<double, double> EnergyDataSeries = new XyDataSeries<double, double>() { FifoCapacity = 500, SeriesName = "Energy" };
-        XyDataSeries<double, double> PhaseDataSeries = new XyDataSeries<double, double>() { FifoCapacity = 500, SeriesName = "Phase", AcceptsUnsortedData=true };
+        XyDataSeries<double, double> XDataSeries = new XyDataSeries<double, double>() { FifoCapacity = 2500, SeriesName = "Угол" };
+        XyDataSeries<double, double> SpeedDataSeries = new XyDataSeries<double, double>() { FifoCapacity = 2500, SeriesName = "Угловая скорость" };
+        XyDataSeries<double, double> EnergyDataSeries = new XyDataSeries<double, double>() { FifoCapacity = 2500, SeriesName = "Полная энергия" };
+        XyDataSeries<double, double> PhaseDataSeries = new XyDataSeries<double, double>() { FifoCapacity = 2500, SeriesName = "Phase", AcceptsUnsortedData=true };
         IUpdateSuspender chartSuspender = null;
         IUpdateSuspender phaseSuspender = null;
         Rectangle rectangle = new Rectangle()
@@ -286,12 +286,19 @@ namespace stuff_oscillating
             max = Double.NegativeInfinity;
             Model.Start(new Model.ModelParameters
             {
-                ObjectMass = Convert.ToDouble(MassTB.Text),
-                InitialAngle = Convert.ToDouble(InitialPositionTB.Text),
-                InitialVelocity = Convert.ToDouble(InitialSpeedTB.Text),
-                ForcePeriod = Convert.ToDouble(ExternalForcePeriodTB.Text),
-                ForceAmplitude = Convert.ToDouble(ExternalForceAmplitudeTB.Text),
-                UseForce = Convert.ToBoolean(ExternalForceCB.IsChecked)
+                ObjectMass = Convert.ToDouble(PassDefaultIfEmpty(MassTB.Text)),
+                InitialVelocity = Convert.ToDouble(PassDefaultIfEmpty(InitialSpeedTB.Text)),
+                InitialAngle = Convert.ToDouble(PassDefaultIfEmpty(InitialAngleTB.Text)),
+                Length = Convert.ToDouble(PassDefaultIfEmpty(LengthTB.Text)),
+                Shift = Convert.ToDouble(PassDefaultIfEmpty(ConstantWindTB.Text)),
+                EnviromentDensity = Convert.ToDouble(PassDefaultIfEmpty(EnviromentDensityTB.Text)),
+                EnviromentViscosity = Convert.ToDouble(PassDefaultIfEmpty(EnviromentViscosityTB.Text)),
+                Radius = Convert.ToDouble(PassDefaultIfEmpty(RadiusTB.Text)),
+                ShiftAmplitude = Convert.ToDouble(PassDefaultIfEmpty(WindAmplitudeTB.Text)),
+                ShiftPeriod = Convert.ToDouble(PassDefaultIfEmpty(WindPeriodTB.Text)),
+                UseArchimedes = ArchimedesForceCB.IsChecked.Value,
+                UseDrag = GasDragForceCB.IsChecked.Value,
+                UseViscosity = LiquidDragForceCB.IsChecked.Value
             });
         }
 
@@ -315,11 +322,9 @@ namespace stuff_oscillating
             max = (double)XDataSeries.YMax;
         }
 
-        private void ExternalForceAmplitudeTB_TextChanged(object sender, TextChangedEventArgs e) => Model.Parameters.ForceAmplitude = Convert.ToDouble(PassDefaultIfEmpty(ExternalForceAmplitudeTB.Text));
+        private void ExternalForceAmplitudeTB_TextChanged(object sender, TextChangedEventArgs e) => Model.Parameters.ShiftAmplitude = Convert.ToDouble(PassDefaultIfEmpty(WindAmplitudeTB.Text));
 
-        private void ExternalForcePeriodTB_TextChanged(object sender, TextChangedEventArgs e) => Model.Parameters.ForcePeriod = Convert.ToDouble(PassDefaultIfEmpty(ExternalForcePeriodTB.Text));
-
-        private void ExternalForceCB_Checked(object sender, RoutedEventArgs e) => Model.Parameters.UseForce = ExternalForceCB.IsChecked.Value;
+        private void ExternalForcePeriodTB_TextChanged(object sender, TextChangedEventArgs e) => Model.Parameters.ShiftPeriod = Convert.ToDouble(PassDefaultIfEmpty(WindPeriodTB.Text));
 
         private void PauseButton_Click(object sender, RoutedEventArgs e)
         {
@@ -342,10 +347,18 @@ namespace stuff_oscillating
         private void ToggleTextBoxes(bool value)
         {
             MassTB.IsEnabled = value;
-            RestrictionCoefficientTB.IsEnabled = value;
-            FrictionCoefficientTB.IsEnabled = value;
+            RadiusTB.IsEnabled = value;
+            LengthTB.IsEnabled = value;
             InitialSpeedTB.IsEnabled = value;
-            InitialPositionTB.IsEnabled = value;
+            InitialAngleTB.IsEnabled = value;
+            WindAmplitudeTB.IsEnabled = value;
+            WindPeriodTB.IsEnabled = value;
+            ConstantWindTB.IsEnabled = value;
+            EnviromentDensityTB.IsEnabled = value;
+            EnviromentViscosityTB.IsEnabled = value;
+            ArchimedesForceCB.IsEnabled = value;
+            GasDragForceCB.IsEnabled = value;
+            LiquidDragForceCB.IsEnabled = value;
         }
 
     }
@@ -362,7 +375,7 @@ namespace stuff_oscillating
     [ValueConversion(typeof(object), typeof(string))]
     public class StringFormatConverter : IValueConverter, IMultiValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public virtual object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             return Convert(new object[] { value }, targetType, parameter, culture);
         }
@@ -373,7 +386,7 @@ namespace stuff_oscillating
             return DependencyProperty.UnsetValue;
         }
 
-        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        public virtual object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
             try
             {
@@ -400,6 +413,53 @@ namespace stuff_oscillating
         {
             System.Diagnostics.Trace.TraceError("StringFormatConverter: does not support TwoWay or OneWayToSource bindings.");
             return null;
+        }
+
+    }
+
+    [ValueConversion(typeof(object), typeof(string))]
+    public class RadiusMassToDensityConverter : StringFormatConverter
+    {
+        public override object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            double r;
+            try
+            {
+                r = Double.Parse(values[0].ToString());
+            }
+            catch (FormatException e)
+            {
+                r = 1;
+            }
+            double v = Math.Pow(r, 3) * Math.PI * 4.0 / 3.0;
+            double m;
+            try
+            {
+                m = Double.Parse(values[1].ToString());
+            }
+            catch (FormatException e)
+            {
+                m = 1;
+            }
+            return base.Convert(new object[] { m / v }, targetType, parameter, culture);
+        }
+    }
+
+    [ValueConversion(typeof(object), typeof(string))]
+    public class LengthToPeriodConverter : StringFormatConverter
+    {
+        public override object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            double l;
+            try
+            {
+                l = Double.Parse(values[0].ToString());
+            }
+            catch (FormatException e)
+            {
+                l = 1;
+            }
+            return base.Convert(new object[] { 9.81 / l }, targetType, parameter, culture);
         }
     }
 
