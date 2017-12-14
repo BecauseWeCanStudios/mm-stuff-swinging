@@ -13,21 +13,17 @@ namespace stuff_oscillating
         public class ModelParameters
         {
             public double ObjectMass = 1;
-            public double RestrictionCoeffitient = 1;
-            public double FrictionCoeffitient = 0.1;
-#pragma warning disable IDE1006 // Стили именования
-            public double ω => RestrictionCoeffitient / ObjectMass;
-#pragma warning restore IDE1006 // Стили именования
             public double InitialVelocity = 0;
-            public double InitialX  = 1;
-            public double Dt = 0.5;
+            public double InitialAngle  = 1;
             public double Length = 10;
             public double Shift = 0;
-            public double EnviromentDensity = 3;
+            public double ShiftPeriod = 0.5;
+            public double ShiftAmplitude = 1;
+            public double EnviromentDensity = 1.1;
             public double ObjectRadius = 1;
             public double ObjectDensity { get { return ObjectMass / ObjectVolume; } }
             public double ObjectVolume { get { return 4.0 / 3.0 * Math.PI * Math.Pow(ObjectRadius, 3); } }
-            public bool UseArchimedes = true;
+            public bool UseArchimedes = false;
             public bool UseDrag = true;
             public bool UseViscosity = false;
             public double Radius = 1;
@@ -189,7 +185,7 @@ namespace stuff_oscillating
             }
         }
 
-        private static Func<double, double, double> f;
+        private static Func<double, double, double, double> f;
 
         public static EventHandler<ModelStatus> ModelTick;
 
@@ -199,13 +195,13 @@ namespace stuff_oscillating
             double t = modelStatus.Time;
             double a = modelStatus.Angle;
             double v = modelStatus.Velocity;
-            double k11 = f(a, v);
+            double k11 = f(t, a, v);
             double k21 = v;
-            double k12 = f(a + dt * k21 / 2, v + dt * k11 / 2);
+            double k12 = f(t + dt / 2, a + dt * k21 / 2, v + dt * k11 / 2);
             double k22 = v + dt * k11 / 2;
-            double k13 = f(a + dt * k22 / 2, v + dt * k12 / 2);
+            double k13 = f(t + dt / 2, a + dt * k22 / 2, v + dt * k12 / 2);
             double k23 = v + dt * k12 / 2;
-            double k14 = f(a + dt * k23, v + dt * k13);
+            double k14 = f(t + dt, a + dt * k23, v + dt * k13);
             double k24 = v + dt * k13;
             double xc = Math.Sin(a) * parameters.Length;
             double yc = Math.Cos(a) * parameters.Length;
@@ -236,26 +232,28 @@ namespace stuff_oscillating
             modelStatus = new ModelStatus()
             {
                 Time = 0,
-                Angle = parameters.InitialX,
+                Angle = parameters.InitialAngle,
                 Velocity = parameters.InitialVelocity,
-                Energy = 0.5 * (parameters.ObjectMass * parameters.InitialVelocity * parameters.InitialVelocity +
-                    parameters.InitialX * parameters.InitialX * parameters.RestrictionCoeffitient)
+                Energy = parameters.ObjectMass * 9.81 * parameters.Length * (1 - Math.Cos(modelStatus.Angle)) +
+                0.5 * parameters.ObjectMass * parameters.Length * parameters.Length * modelStatus.Velocity * modelStatus.Velocity
             };
             Func<double, double> nf = a => -9.81 * Math.Sin(a);
             Func<double, double> archimedes = a => 0;
-            Func<double, double, double> drag = (a, v) => 0;
+            Func<double, double, double, double> drag = (t, a, v) => 0;
             if (parameters.UseArchimedes)
                 archimedes = a => 9.81 * parameters.EnviromentDensity / parameters.ObjectDensity * Math.Sin(a);
             if (parameters.UseViscosity)
-                drag = (a, v) =>
-                    parameters.ViscosityCoeff * (-Math.Sin(a - Math.PI / 2) * parameters.Shift - v) / parameters.ObjectMass;
+                drag = (t, a, v) =>
+                    parameters.ViscosityCoeff * (-Math.Sin(a - Math.PI / 2) * 
+                        (parameters.Shift + parameters.ShiftAmplitude * Math.Cos(parameters.ShiftPeriod * t)) - v * parameters.Length) / parameters.ObjectMass;
             else if (parameters.UseDrag)
-                drag = (a, v) =>
+                drag = (t, a, v) =>
                 {
-                    double av = -Math.Sin(a - Math.PI / 2) * parameters.Shift - v;
+                    double av = -Math.Sin(a - Math.PI / 2) *
+                        (parameters.Shift + parameters.ShiftAmplitude * Math.Cos(parameters.ShiftPeriod * t)) - v * parameters.Length;
                     return parameters.DragCoeff * Math.Abs(av) * av / parameters.ObjectMass;
                 };
-            f = (a, v) => (nf(a) + archimedes(a) + drag(a, v)) / parameters.Length;
+            f = (t, a, v) => (nf(a) + archimedes(a) + drag(t, a, v)) / parameters.Length;
             stopwatch.Restart();
             timer = new Timer(CalculateState, null, 0, 10);
         }

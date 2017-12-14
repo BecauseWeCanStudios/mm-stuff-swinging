@@ -287,12 +287,10 @@ namespace stuff_oscillating
             Model.Start(new Model.ModelParameters
             {
                 ObjectMass = Convert.ToDouble(MassTB.Text),
-                InitialX = Convert.ToDouble(InitialPositionTB.Text),
+                InitialAngle = Convert.ToDouble(InitialPositionTB.Text),
                 InitialVelocity = Convert.ToDouble(InitialSpeedTB.Text),
                 ForcePeriod = Convert.ToDouble(ExternalForcePeriodTB.Text),
                 ForceAmplitude = Convert.ToDouble(ExternalForceAmplitudeTB.Text),
-                FrictionCoeffitient = Convert.ToDouble(FrictionCoefficientTB.Text),
-                RestrictionCoeffitient = Convert.ToDouble(RestrictionCoefficientTB.Text),
                 UseForce = Convert.ToBoolean(ExternalForceCB.IsChecked)
             });
         }
