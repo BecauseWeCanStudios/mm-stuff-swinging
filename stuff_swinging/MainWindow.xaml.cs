@@ -34,15 +34,17 @@ namespace stuff_oscillating
     public partial class MainWindow : MetroWindow, INotifyPropertyChanged
     {
         static bool IsFirst = true;
-        XyDataSeries<double, double> XDataSeries = new XyDataSeries<double, double>() { FifoCapacity = 2500, SeriesName = "Угол" };
-        XyDataSeries<double, double> SpeedDataSeries = new XyDataSeries<double, double>() { FifoCapacity = 2500, SeriesName = "Угловая скорость" };
-        XyDataSeries<double, double> EnergyDataSeries = new XyDataSeries<double, double>() { FifoCapacity = 2500, SeriesName = "Полная энергия" };
-        XyDataSeries<double, double> PhaseDataSeries = new XyDataSeries<double, double>() { FifoCapacity = 2500, SeriesName = "Phase", AcceptsUnsortedData=true };
+        XyDataSeries<double, double> XDataSeries = new XyDataSeries<double, double>() { FifoCapacity = 500, SeriesName = "Угол" };
+        XyDataSeries<double, double> SpeedDataSeries = new XyDataSeries<double, double>() { FifoCapacity = 500, SeriesName = "Угловая скорость" };
+        XyDataSeries<double, double> EnergyDataSeries = new XyDataSeries<double, double>() { FifoCapacity = 500, SeriesName = "Полная энергия" };
+        XyDataSeries<double, double> PhaseDataSeries = new XyDataSeries<double, double>() { FifoCapacity = 500, SeriesName = "Phase", AcceptsUnsortedData=true };
         IUpdateSuspender chartSuspender = null;
         IUpdateSuspender phaseSuspender = null;
-        Rectangle rectangle = new Rectangle()
+        Ellipse ellipse = new Ellipse()
         {
-            Fill = new SolidColorBrush(Colors.Teal)
+            Fill = new SolidColorBrush(Colors.Teal),
+            Width = 50,
+            Height = 50
         };
         Line spring = new Line()
         {
@@ -50,35 +52,7 @@ namespace stuff_oscillating
             X1 = 0,
             X2 = 0,
             Y1 = 0,
-            Y2 = 0
-        };
-        Line xLine = new Line()
-        {
-            Stroke = new SolidColorBrush(Colors.White),
-            StrokeThickness = 4,
-            X1 = 200,
-            X2 = 1180,
-            Y1 = 0,
-            Y2 = 0
-        };
-        Line yLine = new Line()
-        {
-            Stroke = new SolidColorBrush(Colors.White),
-            StrokeThickness = 4,
-            X1 = 0,
-            X2 = 0,
-            Y1 = 100,
-            Y2 = 0
-        };
-        TextBlock X1textBlock = new TextBlock()
-        {
-            Foreground = new SolidColorBrush(Colors.White),
-            FontSize = 14
-        };
-        TextBlock X2textBlock = new TextBlock()
-        {
-            Foreground = new SolidColorBrush(Colors.White),
-            FontSize = 14
+            Y2 = 225
         };
         double min = Double.PositiveInfinity;
         double max = Double.NegativeInfinity;
@@ -97,16 +71,12 @@ namespace stuff_oscillating
             speedSeries.DataSeries = SpeedDataSeries;
             energySeries.DataSeries = EnergyDataSeries;
             phaseSeries.DataSeries = PhaseDataSeries;
-            animCanvas.Children.Add(xLine);
-            animCanvas.Children.Add(yLine);
-            animCanvas.Children.Add(rectangle);
             animCanvas.Children.Add(spring);
-            animCanvas.Children.Add(X1textBlock);
-            animCanvas.Children.Add(X2textBlock);
-            Canvas.SetLeft(spring, 0);
-            Canvas.SetTop(spring, 360);
-            Canvas.SetLeft(X2textBlock, 1080);
-            Canvas.SetLeft(X1textBlock, 200);
+            animCanvas.Children.Add(ellipse);
+            Canvas.SetLeft(ellipse, 610);
+            Canvas.SetTop(ellipse, 550);
+            Canvas.SetLeft(spring, 635);
+            Canvas.SetTop(spring, 350);
             DataContext = this;
             Model.ModelTick += OnModelTick;
         }
@@ -138,39 +108,15 @@ namespace stuff_oscillating
             {
                 PhaseDataSeries.Append(result.Angle, result.Velocity);
             }
-            min = Math.Min(min, result.Angle);
-            max = Math.Max(max, result.Angle);
             if (animTab.IsSelected)
             {
-                double k = min != 0 && max != 0
-                    ? 800 / (Math.Abs(min) + Math.Abs(max))
-                    : 800;
-                k = Math.Min(k, 800);
-                k = Math.Max(k, 20);
-                rectangle.Width = k / 4;
-                rectangle.Height = k / 4;
-                spring.X2 = 200 + (result.Angle - min) * k;
-                spring.StrokeThickness = 1 + (80 * Math.Cos((spring.X2 - 200) * Math.PI / 1600)) * k / 800;
-                spring.Stroke = new SolidColorBrush(new Color()
-                {
-                    R = result.Angle < 0 ? (byte)(Math.Cos((result.Angle - min) * Math.PI / 2 / Math.Abs(min)) * 255) : (byte)0,
-                    G = (byte)(Math.Abs(Math.Sin((result.Angle - min) * Math.PI / (Math.Abs(min) + Math.Abs(max)))) * 255),
-                    B = result.Angle > 0 ? (byte)(Math.Cos((max - result.Angle) * Math.PI / 2 / Math.Abs(max)) * 255) : (byte)0,
-                    A = 255
-                });
-                Canvas.SetTop(rectangle, 360 - rectangle.Height / 2);
-                Canvas.SetLeft(rectangle, spring.X2);
-                Canvas.SetLeft(yLine, 200 - min * k + rectangle.Width / 2);
-                double bottom = 360 + rectangle.Height / 2;
-                Canvas.SetTop(xLine, bottom);
-                Canvas.SetTop(X1textBlock, bottom + 10);
-                Canvas.SetTop(X2textBlock, bottom + 10);
-                yLine.Y2 = bottom + 20;
-                yLine.Y1 = bottom - 20;
-                xLine.X2 = 200 + (max - min) * k + rectangle.Width;
-                X1textBlock.Text = min.ToString("N2");
-                X2textBlock.Text = max.ToString("N2");
-                Canvas.SetLeft(X2textBlock, Math.Min(xLine.X2, 1200));
+                double l = Model.Parameters.Length;
+                double x = -Math.Cos(result.Angle + Math.PI / 2) * 200;
+                double y = Math.Sin(result.Angle + Math.PI / 2) * 200;
+                Canvas.SetLeft(ellipse, x + 610);
+                Canvas.SetTop(ellipse, y + 350 - 25);
+                spring.X2 = x;
+                spring.Y2 = y;
             }
         }
 

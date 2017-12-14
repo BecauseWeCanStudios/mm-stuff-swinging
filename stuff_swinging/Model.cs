@@ -164,17 +164,18 @@ namespace stuff_oscillating
             double v = modelStatus.Velocity;
             double impulse = Impulse / parameters.ObjectMass / parameters.Length;
             Impulse = 0;
-            double k11 = f(t, a, v) + impulse;
+            double k11 = f(t, a, v);
             double k21 = v;
-            double k12 = f(t + dt / 2, a + dt * k21 / 2, v + dt * k11 / 2) + impulse;
+            double k12 = f(t + dt / 2, a + dt * k21 / 2, v + dt * k11 / 2);
             double k22 = v + dt * k11 / 2;
-            double k13 = f(t + dt / 2, a + dt * k22 / 2, v + dt * k12 / 2) + impulse;
+            double k13 = f(t + dt / 2, a + dt * k22 / 2, v + dt * k12 / 2);
             double k23 = v + dt * k12 / 2;
-            double k14 = f(t + dt, a + dt * k23, v + dt * k13) + impulse;
+            double k14 = f(t + dt, a + dt * k23, v + dt * k13);
             double k24 = v + dt * k13;
-            modelStatus.Velocity += dt * (k11 + 2 * k12 + 2 * k13 + k14) / 6;
-            modelStatus.Angle += dt * (k21 + 2 * k22 + 2 * k23 + k24) / 6;
-            //modelStatus.Angle %= 2 * Math.PI;
+            modelStatus.Velocity += dt * (k11 + 2 * k12 + 2 * k13 + k14) / 6 + impulse;
+            a += dt * (k21 + 2 * k22 + 2 * k23 + k24) / 6;
+            a -= Math.Floor((a + Math.PI) / 2 / Math.PI) * 2 * Math.PI;
+            modelStatus.Angle = a;
             modelStatus.Time += dt;
             modelStatus.Energy = parameters.ObjectMass * 9.81 * parameters.Length * (1 - Math.Cos(modelStatus.Angle)) +
                 0.5 * parameters.ObjectMass * parameters.Length * parameters.Length * modelStatus.Velocity * modelStatus.Velocity;
