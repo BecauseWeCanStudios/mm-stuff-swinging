@@ -14,7 +14,7 @@
                    xmlns:qc="clr-namespace:QuickConverter;assembly=QuickConverter"
                    xmlns:c="clr-namespace:CalcBinding;assembly=CalcBinding"
                    mc:Ignorable="d"
-                   Title="Модель пружинного маятника" Height="900" Width="1400"
+                   Title="Модель маятника" Height="900" Width="1400"
                    GlowBrush="{DynamicResource AccentColorBrush}"
                    BorderThickness="1"
                    TextElement.Foreground="{DynamicResource MaterialDesignBody}"
@@ -460,7 +460,7 @@
                                             DisplayMemberBinding="{Binding X, StringFormat=n3}">
                                             <GridViewColumnHeader>
                                                 <TextBlock>
-                                                    x<Run BaselineAlignment="Subscript" FontSize="10">k</Run>
+                                                    θ<Run BaselineAlignment="Subscript" FontSize="10">k</Run>
                                                 </TextBlock>
                                             </GridViewColumnHeader>
                                         </GridViewColumn>
