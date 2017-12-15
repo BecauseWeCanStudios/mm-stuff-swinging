@@ -213,12 +213,12 @@ namespace stuff_oscillating
             if (parameters.UseViscosity)
                 drag = (t, a, v) =>
                     parameters.ViscosityCoeff * (-Math.Sin(a - Math.PI / 2) * 
-                        (parameters.Shift + parameters.ShiftAmplitude * Math.Cos(parameters.ShiftPeriod * t)) - v * parameters.Length) / parameters.ObjectMass;
+                        (parameters.Shift + parameters.ShiftAmplitude * Math.Cos(parameters.ShiftPeriod * t)) - v) / parameters.ObjectMass;
             else if (parameters.UseDrag)
                 drag = (t, a, v) =>
                 {
                     double av = -Math.Sin(a - Math.PI / 2) *
-                        (parameters.Shift + parameters.ShiftAmplitude * Math.Cos(parameters.ShiftPeriod * t)) - v * parameters.Length;
+                        (parameters.Shift + parameters.ShiftAmplitude * Math.Cos(parameters.ShiftPeriod * t)) - v;
                     return parameters.DragCoeff * Math.Abs(av) * av / parameters.ObjectMass;
                 };
             f = (t, a, v) => (nf(a) + archimedes(a) + drag(t, a, v)) / parameters.Length;
